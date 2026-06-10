@@ -35,14 +35,16 @@ done
 
 ENCODED_IMAGE=$(python3 -c "import urllib.parse; print(urllib.parse.quote('${IMAGE}'))")
 
-CRUMB_JSON=$(curl -sf -u "${JENKINS_USER}:${JENKINS_PASS}" "${JENKINS_URL}/crumbIssuer/api/json")
+COOKIE_JAR=$(mktemp)
+trap 'rm -f "${COOKIE_JAR}"' EXIT
+CRUMB_JSON=$(curl -sf -c "${COOKIE_JAR}" -u "${JENKINS_USER}:${JENKINS_PASS}" "${JENKINS_URL}/crumbIssuer/api/json")
 CRUMB=$(echo "${CRUMB_JSON}" | python3 -c "import sys,json; print(json.load(sys.stdin)['crumb'])")
 CRUMB_FIELD=$(echo "${CRUMB_JSON}" | python3 -c "import sys,json; print(json.load(sys.stdin)['crumbRequestField'])")
 
 echo "==> 触发 appx-deploy"
 echo "    IMAGE=${IMAGE}  Env=${ENV}  deployID=${DEPLOY_ID}  CI_BUILD=${CI_BUILD}"
 
-curl -sf -u "${JENKINS_USER}:${JENKINS_PASS}" \
+curl -sf -b "${COOKIE_JAR}" -u "${JENKINS_USER}:${JENKINS_PASS}" \
   -H "${CRUMB_FIELD}: ${CRUMB}" \
   -X POST \
   "${JENKINS_URL}/job/appx-deploy/buildWithParameters?IMAGE=${ENCODED_IMAGE}&Env=${ENV}&deployID=${DEPLOY_ID}&CI_BUILD=${CI_BUILD}"
