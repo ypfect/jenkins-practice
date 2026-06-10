@@ -17,6 +17,7 @@ services:
     volumes:
       - jenkins_home:/var/jenkins_home
       - ./casc:/var/jenkins_home/casc_configs:ro
+      - ./maven/settings.xml:/opt/maven-settings.xml:ro
       - /var/run/docker.sock:/var/run/docker.sock
       - artifacts:/artifacts
 
@@ -26,6 +27,8 @@ services:
     restart: unless-stopped
     ports:
       - "5050:5000"
+    environment:
+      REGISTRY_STORAGE_DELETE_ENABLED: "true"
     volumes:
       - registry_data:/var/lib/registry
 

@@ -1,45 +1,50 @@
-# jenkins-practice — 通用 Jenkins 环境
+# jenkins-practice — 通用 Jenkins 平台
 
-Jenkins Master + Registry 的容器化部署。与项目配置目录（如 `../config/<project>/`）配合使用。
+Jenkins Master + Registry 的容器化部署，对标公司 `jenkins2k8s` 平台层。
 
-## 定位
+## 三层架构
 
 ```
-practice/          = 平台层：通用 Jenkins + Registry 环境
-config/<project>/  = 编排层：项目专属的 Jenkinsfile、Job XML、脚本
+practice/          = 平台层：Jenkins Master + Registry（对标 jenkins2k8s）
+config/<project>/  = 编排层：Jenkinsfile + 脚本（对标 ci2k8s）
 <project repo>     = 业务层：纯业务代码
 ```
+
+| 公司 | 本地 |
+|------|------|
+| `jenkins2k8s`（Helm + JCasC） | `practice/`（Docker Compose + JCasC） |
+| `ops/ci2k8s`（Git Monorepo） | `config/<project>/` |
+| Jenkins UI 建 Job 壳 | `register-jobs.sh` 注册 Job 壳 |
+| git push Jenkinsfile 即生效 | 同上 |
 
 ## 首次部署
 
 ```bash
 cd practice
+
+# 1. 启动平台
 ./init.sh
+
+# 2. 注册 Job（一次性，之后改 Jenkinsfile push 即生效）
+./register-jobs.sh
 ```
-
-可通过 `JOBS_DIR` 指定要注册的 Job 目录（默认 `./jobs`）：
-
-```bash
-JOBS_DIR=../config/deepModel/jobs ./init.sh
-```
-
-`init.sh` 做什么：
-1. `docker compose up -d --build`（构建 Jenkins 镜像 + 启动 Registry）
-2. 等待 Jenkins 就绪
-3. 配置容器内 git proxy
-4. 扫描 `JOBS_DIR` 下所有 `*.xml`，注册为 Jenkins Job
 
 ## 日常使用
 
 ```bash
-# 启动
+# 启动 / 重启
 docker compose up -d
 
 # 停止
 ./stop.sh
-```
 
-所有配置（Job、git proxy、构建历史）在 `jenkins_home` volume 里，重启不丢。
+# 改了 Jenkinsfile / scripts
+#   → git push 即可，下次构建自动拉最新
+
+# 新增项目
+#   → 创建 config/<project>/ 目录，参考 config/README.md
+#   → ./register-jobs.sh <project>
+```
 
 ## 服务地址
 
@@ -48,15 +53,15 @@ docker compose up -d
 | Jenkins | http://localhost:8080/ （admin / admin123） |
 | Registry | http://localhost:5050/v2/_catalog |
 
-## 什么时候需要重跑 init.sh？
+## 什么时候需要重跑？
 
-| 场景 | 需要 |
+| 场景 | 操作 |
 |------|------|
-| 删了 `jenkins_home` volume | 是 |
-| 换了机器 / 重装 Docker | 是 |
-| 改了 Job XML 配置 | 是（或 Jenkins UI 直接改） |
-| 新增项目 Job | 是（指定对应 JOBS_DIR） |
-| 日常重启 | **不需要，`docker compose up -d` 即可** |
+| 改了 Jenkinsfile / scripts | **不用跑任何脚本**，push 即生效 |
+| 新增项目 Job | `./register-jobs.sh <project>` |
+| 改了 Job XML（参数、SCM 路径） | `./register-jobs.sh <project>` |
+| 日常重启 | `docker compose up -d` |
+| 删了 volume / 换机器 | `./init.sh && ./register-jobs.sh` |
 
 ## 代理（Clash 7890）
 
@@ -87,6 +92,8 @@ colima start --edit
 | `Dockerfile` | 自定义 Jenkins 镜像（插件 + docker CLI） |
 | `Dockerfile.app` | 通用 Java 应用镜像模板 |
 | `casc/jenkins.yaml` | JCasC：用户、执行器数 |
-| `init.sh` | 初始化脚本（启动 + 注册 Job） |
+| `init.sh` | 平台初始化（启动 Docker + 配置 proxy） |
+| `register-jobs.sh` | Job 注册（扫描 config/ 下所有项目） |
+| `cleanup.sh` | 镜像清理（宿主机残留 + Registry 旧 tag） |
 | `stop.sh` | 关闭脚本 |
 | `plugins.txt` | Jenkins 插件清单 |
