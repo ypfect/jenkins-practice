@@ -94,6 +94,8 @@ colima start --edit
 | `casc/jenkins.yaml` | JCasC：用户、执行器数 |
 | `init.sh` | 平台初始化（启动 Docker + 配置 proxy） |
 | `register-jobs.sh` | Job 注册（扫描 config/ 下所有项目） |
+| `trigger-ci.sh` | 模拟 QiQiOps 触发 CI |
+| `trigger-deploy.sh` | 模拟 QiQiOps 触发 CD |
 | `cleanup.sh` | 镜像清理（宿主机残留 + Registry 旧 tag） |
 | `stop.sh` | 关闭脚本 |
 | `plugins.txt` | Jenkins 插件清单 |
