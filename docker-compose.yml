@@ -1,0 +1,35 @@
+services:
+  jenkins:
+    build: .
+    image: jenkins-local:latest
+    container_name: jenkins-local
+    restart: unless-stopped
+    group_add:
+      - "991"
+    ports:
+      - "8080:8080"
+      - "50000:50000"
+    environment:
+      JAVA_OPTS: "-Djenkins.install.runSetupWizard=false -Djava.awt.headless=true -Dhudson.plugins.git.GitSCM.ALLOW_LOCAL_CHECKOUT=true"
+      HTTP_PROXY: "http://host.docker.internal:7890"
+      HTTPS_PROXY: "http://host.docker.internal:7890"
+      NO_PROXY: "localhost,127.0.0.1,jenkins-local,host.docker.internal,registry"
+    volumes:
+      - jenkins_home:/var/jenkins_home
+      - ./casc:/var/jenkins_home/casc_configs:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+      - artifacts:/artifacts
+
+  registry:
+    image: registry:2
+    container_name: registry
+    restart: unless-stopped
+    ports:
+      - "5050:5000"
+    volumes:
+      - registry_data:/var/lib/registry
+
+volumes:
+  jenkins_home:
+  registry_data:
+  artifacts:
