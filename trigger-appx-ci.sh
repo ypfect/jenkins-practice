@@ -7,15 +7,15 @@ JENKINS_PASS="${JENKINS_PASS:-admin123}"
 
 usage() {
   cat <<EOF
-用法: $(basename "$0") [--branch main] [--env local] [--deploy-id 123]
+用法: $(basename "$0") [--branch master] [--env local] [--deploy-id 123]
 
 示例:
-  $(basename "$0") --branch main --env local --deploy-id 10001
+  $(basename "$0") --branch master --env local --deploy-id 10001
 EOF
   exit 1
 }
 
-BRANCH="main"
+BRANCH="master"
 ENV="local"
 DEPLOY_ID=""
 
