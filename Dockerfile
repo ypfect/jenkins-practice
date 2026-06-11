@@ -2,7 +2,7 @@ FROM jenkins/jenkins:lts-jdk21
 
 USER root
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends docker.io docker-cli maven \
+    && apt-get install -y --no-install-recommends docker.io docker-cli maven python3 python3-pip \
     && rm -rf /var/lib/apt/lists/* \
     && usermod -aG docker jenkins \
     && mkdir -p /artifacts && chown jenkins:jenkins /artifacts
